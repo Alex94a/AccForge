@@ -133,3 +133,6 @@ dist
 *.txt
 *.yml
 *.db
+
+
+config.js
