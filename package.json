@@ -1,0 +1,27 @@
+{
+  "name": "advanced-selenium-template",
+  "version": "1.0.0",
+  "description": "A Selenium-based automation framework with anti-detect fingerprinting, advanced element interaction, and proxy handling.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "type": "module",
+  "dependencies": {
+    "js-yaml": "^4.1.0",
+    "p-queue": "^8.0.1",
+    "selenium-webdriver": "^4.27.0",
+    "selenium-with-fingerprints": "^2.0.5",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7",
+    "winston": "^3.17.0",
+    "node-fetch": "^3.3.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.31.0",
+    "prettier": "^2.7.1"
+  },
+  "author": "",
+  "license": "ISC"
+}
