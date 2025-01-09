@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { plugin } from 'selenium-with-fingerprints';
-import { simpleGitHubVisit } from './example.js';
+import { runAccountCreation } from './executor.js';
 import { Logger } from './src/utils/logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -19,8 +19,8 @@ const run = async () => {
     logger.info('Browser engine downloaded successfully!');
   }
 
-  logger.info('Starting GitHub automation...');
-  await simpleGitHubVisit().catch(error => logger.error(`Automation failed: ${error.message}`));
+  logger.info('Starting automation...');
+  await runAccountCreation().catch(error => logger.error(`Automation failed: ${error.message}`));
 };
 
 await run();

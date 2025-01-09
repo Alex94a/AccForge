@@ -9,14 +9,16 @@
   },
   "type": "module",
   "dependencies": {
-    "js-yaml": "^4.1.0",
+    "@faker-js/faker": "^9.3.0",
+    "faker": "^6.6.6",
+    "node-fetch": "^3.3.0",
     "p-queue": "^8.0.1",
     "selenium-webdriver": "^4.27.0",
     "selenium-with-fingerprints": "^2.0.5",
+    "sharp": "^0.33.5",
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7",
-    "winston": "^3.17.0",
-    "node-fetch": "^3.3.0"
+    "winston": "^3.17.0"
   },
   "devDependencies": {
     "eslint": "^8.31.0",

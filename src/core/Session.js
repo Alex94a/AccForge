@@ -3,7 +3,9 @@ import { Options } from 'selenium-webdriver/chrome.js';
 import { Logger } from '../utils/logger.js';
 import { FingerprintManager } from '../services/fingerprint.js';
 import { ProfileManager } from '../services/profile.js';
-import { loadConfig } from '../utils/config.js';
+import { ProxyManager } from '../services/proxy.js';
+import { fingerprintServiceKey } from '../../config.js'
+
 
 /**
  * Session class to initialize and manage a Selenium session with a configured browser fingerprint.
@@ -21,6 +23,7 @@ export class Session {
         this.driver = null;          // Selenium WebDriver instance (initialized later)
         this.logger = new Logger('Session'); // Logger for session activities
         this.fingerprintManager = new FingerprintManager(); // Manager for handling fingerprints
+        this.proxyManager = new ProxyManager();  // Manager for handling proxies
         this.profileManager = new ProfileManager(); // Manager for handling profiles
     }
 
@@ -32,7 +35,7 @@ export class Session {
         this.logger.info('Initializing session...');
         
         // Sets the service key for the fingerprint plugin (empty by default)
-        plugin.setServiceKey(loadConfig().serviceKey);
+        plugin.setServiceKey(fingerprintServiceKey);
 
         // Fetch the profile path based on the session ID\
         const profilePath = await this.profileManager.getProfilePath(this.sessionId);
@@ -55,16 +58,20 @@ export class Session {
     async configureOptions(profilePath, config) {
         const options = new Options();
         
+        // Set the user data directory to the provided profile path
+        options.addArguments([`--user-data-dir=${profilePath}`]);
+
         // Enable headless mode if specified in the configuration
         if (config.headless) {
             options.addArguments('--headless');
         }
 
-        // Disable logging for various components (browser, driver, performance, server)
-        options.setLoggingPrefs({ browser: 'OFF', driver: 'OFF', performance: 'OFF', server: 'OFF' });
-
         // Configure proxy if specified in the configuration
-        if (config.proxy !== 'default') {
+        if (config.proxy && config.proxy !== 'default') {
+            if (config.proxy == 'database') {
+                config.proxy = await this.proxyManager.readAndRotateProxy();
+            } 
+
             if (config.proxy.match(/^(.*?):(.*)@/)) {
                 // Use proxy with authentication details if specified
                 await plugin.useProxy(config.proxy, {
@@ -76,9 +83,6 @@ export class Session {
                 options.addArguments(`--proxy-server=${config.proxy}`);
             }
         }
-
-        // Set the user data directory to the provided profile path
-        options.addArguments([`--user-data-dir=${profilePath}`]);
 
         // Configure the browser fingerprint if specified
         if (config.fingerprint && config.fingerprint !== 'default') {
@@ -99,26 +103,6 @@ export class Session {
         }
 
         return options; // Return the configured options
-    }
-
-    /**
-     * Retrieves the fingerprint for the session based on the provided configuration.
-     * 
-     * @param {Object} config - The configuration object containing fingerprint settings.
-     * @returns {string|null} - The fingerprint string if available, otherwise null.
-     */
-    async getFingerprint(config) {
-        if (config.fingerprint === 'fetch') {
-            // Fetch fingerprint if 'fetch' option is selected in config
-            return await plugin.fetch('', { tags: ['Microsoft Windows', 'Chrome'] });
-        } else if (config.fingerprint === 'database') {
-            // Fetch the fingerprint from the fingerprint manager (database)
-            return await this.fingerprintManager.fetchAndUpdateFingerprint();
-        } else if (config.fingerprint && config.fingerprint !== 'default') {
-            // Use the provided fingerprint if available
-            return config.fingerprint;
-        }
-        return null; // Return null if no fingerprint is configured
     }
 
     /**
