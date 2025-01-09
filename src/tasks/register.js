@@ -2,8 +2,6 @@ import { Logger } from '../utils/logger.js';
 import { createSmsService } from '../services/sms.js';
 import { smsService } from '../../config.js';
 import { Key } from 'selenium-webdriver';
-import { TimeoutError } from 'selenium-webdriver';
-
 
 
 const XPATHS_REGISTER = {
@@ -15,16 +13,17 @@ const XPATHS_REGISTER = {
   monthSelect: '//*[@id="month"]',
   yearInput: '//*[@id="year"]',
   genderSelect: '//*[@id="gender"]',
-  phoneNumberInput: '//*[@id="phoneNumber"]',
-  phoneNextButton: '//*[@id="phone-next-button"]',
-  smsCodeInput: '//*[@id="sms-code"]',
-  smsNextButton: '//*[@id="sms-next-button"]',
-  recoveryEmailInputElement: '//*[@id="recoveryEmail"]',
-  recoveryNextButton: '//*[@id="recovery-next-button"]',
   useCurrentEmailButton: '//*[@id="yDmH0d"]/c-wiz/div/div[2]/div/div/div/form/span/section/div/div/div[1]/div[1]/div/span/div[3]/div/div[1]/div',
   loginInput: '//*[@id="yDmH0d"]/c-wiz/div/div[2]/div/div/div/form/span/section/div/div/div/div[1]/div/div[1]/div/div[1]/input',
   passwordInput: '//*[@id="passwd"]/div[1]/div/div[1]/input',
-  confirmPasswordInput: '//*[@id="confirm-passwd"]/div[1]/div/div[1]/input'
+  confirmPasswordInput: '//*[@id="confirm-passwd"]/div[1]/div/div[1]/input',
+  phoneNumberInput: '//*[@id="phoneNumberId"]',
+  phoneNextButton: '//*[@id="next"]/div/button',
+  smsCodeInput: '//*[@id="code"]',
+  recoveryEmailInputElement: '//*[@id="recoveryEmailId"]',
+  recoveryNextButton: '//*[@id="recoveryNext"]/div/button',
+    agreeButton: '//*[@id="next"]/div/button',
+  finishButton: '//*[@id="yDmH0d"]/c-wiz/div/div[3]/div/div[1]/div/div/button'
 };
 
 const logger = new Logger('Register');
@@ -51,18 +50,33 @@ export async function register(session, actions, accountData) {
     await actions.selectOption(XPATHS_REGISTER.genderSelect, accountData.gender);
     await actions.input(XPATHS_REGISTER.yearInput, Key.ENTER);
 
+    await new Promise(resolve => setTimeout(resolve, 3000)); 
 
-    
     try {
-      logger.info('Checking for current email option...');
-      await actions.emulateClick(XPATHS_REGISTER.useCurrentEmailButton);
-    } catch (error) {
-      logger.warn('Button "Use my current email address instead" not found.');
-    }
+      try {
+        logger.info('Checking for current email option...');
+        await actions.emulateClick(XPATHS_REGISTER.useCurrentEmailButton);
+      } catch (error) {
+        logger.warn('Button "Use my current email address instead" not found.');
+      }
 
-    logger.info('Entering login...');
-    await actions.input(XPATHS_REGISTER.loginInput, accountData.login.replace("@gmail.com", ""));
-    await actions.input(XPATHS_REGISTER.loginInput, Key.ENTER);
+      logger.info('Entering login...');
+      await actions.input(XPATHS_REGISTER.loginInput, accountData.login.replace("@gmail.com", ""));
+      await actions.input(XPATHS_REGISTER.loginInput, Key.ENTER);
+    } catch {
+      await session.driver.navigate().refresh();
+      await new Promise(resolve => setTimeout(resolve, 5000)); 
+      try {
+        logger.info('Checking for current email option...');
+        await actions.emulateClick(XPATHS_REGISTER.useCurrentEmailButton);
+      } catch (error) {
+        logger.warn('Button "Use my current email address instead" not found.');
+      }
+
+      logger.info('Entering login...');
+      await actions.input(XPATHS_REGISTER.loginInput, accountData.login.replace("@gmail.com", ""));
+      await actions.input(XPATHS_REGISTER.loginInput, Key.ENTER);
+    }
 
     logger.info('Entering password...');
     await actions.input(XPATHS_REGISTER.passwordInput, accountData.password);
@@ -76,6 +90,14 @@ export async function register(session, actions, accountData) {
     logger.info('Entering recovery email');
     await actions.input(XPATHS_REGISTER.recoveryEmailInputElement, accountData.recovery);
     await actions.click(XPATHS_REGISTER.recoveryNextButton);
+
+    this.logger.info('Clicking "I agree" button...');
+		await this.clickElement('//*[@id="next"]/div/button');
+	
+		this.logger.info('Clicking "Create account" button...');
+		await this.clickElement(XPATHS_REGISTER.finishButton);
+
+		this.logger.info('Google account created successfully.');
 
     logger.info('Account registration completed');
     return phone;
@@ -106,16 +128,12 @@ async function handlePhoneVerification(session, actions, accountData) {
         logger.info(`Attempting to input a new number ${phone.number} (attempt ${PhoneAttempt})...`);
       }
 
-      await actions.input(XPATHS_REGISTER.phoneNumberInput, `${phone.number}`);
+      await actions.input(XPATHS_REGISTER.phoneNumberInput, `${phone.number}`, true);
       await actions.input(XPATHS_REGISTER.phoneNumberInput, Key.ENTER);
     } catch (error) {
-      if (error instanceof TimeoutError) {
-        logger.info(`SMS code sent to number ${phone.number}.`);
-        codeReceived = true;
-        break;
-      } else {
-        throw error;
-      }
+      logger.info(`SMS code sent to number ${phone.number}.`);
+      codeReceived = true;
+      break;
     }
   }
 

@@ -28,79 +28,76 @@ const logger = new Logger('createAndUpdateChannel');
 export async function createAndUpdateChannel(session, actions, studioUrl, title, description, logoPath) {
     try {
         logger.info('Creating channel...');
-        await actions.driver.get('https://www.youtube.com/');
-        await actions.randomDelay(2);
-        await actions.driver.get('https://studio.youtube.com/');
-        await actions.randomDelay(5);
+        await session.driver.get('https://www.youtube.com/');
+        
+        await session.driver.get('https://studio.youtube.com/');
+        
 
-        await actions.inputElement(XPATHS.channel.titleInput, title, true);
-        await actions.randomDelay(4);
+        await actions.input(XPATHS.channel.titleInput, title, true);
+        
 
         logger.info('Channel title created.');
 
-        const clickAndWaitPromise = actions.clickElement(XPATHS.channel.createButton)
+        const clickAndWaitPromise = actions.click(XPATHS.channel.createButton)
             .then(() => new Promise(resolve => setTimeout(resolve, 20000)));
 
         const stopScriptPromise = new Promise(resolve => setTimeout(resolve, 15000))
             .then(async () => {
-                await actions.driver.executeScript("window.stop();");
+                await session.driver.executeScript("window.stop();");
             });
 
         await Promise.allSettled([clickAndWaitPromise, stopScriptPromise]);
 
-        let currentUrl = await actions.driver.getCurrentUrl();
+        let currentUrl = await session.driver.getCurrentUrl();
         let channelId = currentUrl.split("/").pop();
 
         logger.info(`Channel created with ID: ${channelId}`);
 
         if (description) {
             logger.info('Updating channel description...');
-            await actions.driver.get(`${studioUrl}/editing/details`);
-            await actions.randomDelay(2);
+            await session.driver.get(`${studioUrl}/editing/details`);
+            
 
             try {
-                await actions.clickElement(XPATHS.description.dismissButton);
+                await actions.click(XPATHS.description.dismissButton);
             } catch { }
 
             try {
-                await actions.clickElement(XPATHS.description.closeButton);
+                await actions.click(XPATHS.description.closeButton);
             } catch { }
 
-            await actions.randomDelay(0.5);
-            await actions.hardInputElement(XPATHS.description.textBox, description);
-            await actions.randomDelay(0.5);
+            await actions.hardInput(XPATHS.description.textBox, description);
 
-            await actions.inputElement(XPATHS.description.textBox, 'ENTER');
-            await actions.randomDelay(1);
+            await actions.input(XPATHS.description.textBox, 'ENTER');
+            
 
-            await actions.clickElement(XPATHS.description.publishButton);
-            await actions.randomDelay(8);
+            await actions.click(XPATHS.description.publishButton);
+            
 
             logger.info('Channel description updated.');
         }
 
         if (logoPath) {
             logger.info('Updating channel logo...');
-            await actions.driver.get(`${studioUrl}/editing/images`);
-            await actions.randomDelay(2);
+            await session.driver.get(`${studioUrl}/editing/images`);
+            
 
             try {
-                await actions.clickElement(XPATHS.logo.dismissButton);
+                await actions.click(XPATHS.logo.dismissButton);
             } catch { }
 
             try {
-                await actions.clickElement(XPATHS.logo.closeButton);
+                await actions.click(XPATHS.logo.closeButton);
             } catch { }
 
-            await actions.randomDelay(0.5);
-            await actions.inputElement(XPATHS.logo.fileInput, path.resolve(logoPath));
-            await actions.randomDelay(5);
+            await actions.input(XPATHS.logo.fileInput, path.resolve(logoPath));
+            
 
-            await actions.clickElement(XPATHS.logo.doneButton);
-            await actions.randomDelay(1);
+            await actions.click(XPATHS.logo.doneButton);
+            
 
-            await actions.clickElement(XPATHS.logo.publishButton);
-            await actions.randomDelay(15);
+            await actions.click(XPATHS.logo.publishButton);
+            ;
 
             logger.info('Channel logo updated.');
         }

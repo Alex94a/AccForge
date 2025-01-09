@@ -56,6 +56,7 @@ class FiveSimService extends SmsService {
   }
 
   async getCode(phoneId) {
+    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
     const maxAttempts = 6;
     const delayBetweenAttempts = 5000;
 

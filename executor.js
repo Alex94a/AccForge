@@ -37,7 +37,12 @@ export class AccountExecutor {
                     logger.info(`Creating account with login: ${accountData.login}`);
                     
                     // Create a new session for this account
-                    const { session, actions } = await this.sessionManager.createSession(sessionId);
+                    const config = {
+                        'fingerprint': 'fetch',
+                        'proxy': 'database',
+                        'headless': false
+                    }
+                    const { session, actions } = await this.sessionManager.createSession(sessionId, config);
                     
                     // Register the account
                     const phone = await register(session, actions, accountData);
